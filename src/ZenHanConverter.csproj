@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+  </PropertyGroup>
+  
+  <!-- プロダクト情報 -->
+  <PropertyGroup>
+    <Product>ZenHanConverter</Product>
+    <Version>0.0.3</Version>
+    <Description>Full-width and half-width character conversion library for Japanese text</Description>
+    <RootNamespace>EsUtil.Helper.ZenHanConverter</RootNamespace>
+    <AssemblyName>EsUtil.Helper.ZenHanConverter</AssemblyName>
+  </PropertyGroup>
+
+  <!-- パッケージ情報 -->
+  <PropertyGroup>
+    <PackageId>$(AssemblyName)</PackageId>
+    <PackageProjectUrl>https://github.com/tomokuni/EsUtil/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/tomokuni/EsUtil/</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Authors>SEKIYA Tomokuni</Authors>
+    <Company>Estable</Company>
+    <Copyright>SEKIYA Tomokuni</Copyright>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+    <SignAssembly>False</SignAssembly>
+  </PropertyGroup>
+
+  <!-- 追加アイテム -->
+  <ItemGroup>
+    <Content Include="..\README.md" Pack="true" PackagePath="\" />
+    <Content Include="..\.github\copilot-instructions.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="src\Generated.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Generated.cs</LastGenOutput>
+    </None>
+    <Compile Update="src\Generated.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Generated.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <IsPublishable>False</IsPublishable>
+    <IsTrimmable>True</IsTrimmable>
+    <IsAotCompatible>True</IsAotCompatible>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <IsPublishable>False</IsPublishable>
+    <IsTrimmable>True</IsTrimmable>
+    <IsAotCompatible>True</IsAotCompatible>
+  </PropertyGroup>
+  
+</Project>

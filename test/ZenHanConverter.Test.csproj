@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- プロダクト情報 -->
+  <PropertyGroup>
+    <AssemblyName>EsUtil.Helpers.ZenHanConverter.Test</AssemblyName>
+    <RootNamespace>EsUtil.Helpers.ZenHanConverter.Test</RootNamespace>
+  </PropertyGroup>
+
+  <!-- パッケージ情報 -->
+  <PropertyGroup>
+    <PackageId>$(AssemblyName)</PackageId>
+    <PackageProjectUrl>https://github.com/tomokuni/EsUtil/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/tomokuni/EsUtil/</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Authors>SEKIYA Tomokuni</Authors>
+    <Company>Estable</Company>
+    <Copyright>SEKIYA Tomokuni</Copyright>
+    <PublishTrimmed>False</PublishTrimmed>
+    <PublishAot>False</PublishAot>
+    <GenerateDocumentationFile>False</GenerateDocumentationFile>
+    <IsPublishable>False</IsPublishable>
+  </PropertyGroup>
+
+  <!-- テストライブラリ -->
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\ZenHanConverter.csproj" />
+  </ItemGroup>
+
+</Project>
