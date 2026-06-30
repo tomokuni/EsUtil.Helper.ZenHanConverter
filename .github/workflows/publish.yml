@@ -1,0 +1,109 @@
+name: Publish to NuGet
+
+on:
+  push:
+    branches: [ main ]   # main ブランチに push されたときに実行
+
+permissions:
+  contents: write        # GitHub Release 作成・タグ作成に必要
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    # リポジトリを取得（タグ比較のため fetch-depth: 0）
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    # .NET SDK をセットアップ
+    # NUGET_AUTH_TOKEN を設定しないと setup-dotnet が GitHub Packages 認証でエラーを出すため必須
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+        source-url: https://api.nuget.org/v3/index.json
+      env:
+        NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # src/*.csproj をすべて列挙
+    - name: Find csproj in src/
+      id: find_projects
+      run: |
+        PROJECTS=$(find src -maxdepth 1 -name "*.csproj")
+        echo "projects<<EOF" >> $GITHUB_OUTPUT
+        echo "$PROJECTS" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    # 各 csproj の <Version> を読み取り、最大バージョンを採用
+    - name: Get max version from all projects
+      id: get_version
+      run: |
+        MAX_VERSION="0.0.0"
+        for PROJ in ${{ steps.find_projects.outputs.projects }}; do
+          VER=$(grep -oPm1 "(?<=<Version>)[^<]+" "$PROJ")
+          printf '%s\n%s\n' "$MAX_VERSION" "$VER" | sort -V | tail -n1 > tmp.txt
+          MAX_VERSION=$(cat tmp.txt)
+        done
+        echo "VERSION=$MAX_VERSION" >> $GITHUB_ENV
+        echo "version=$MAX_VERSION" >> $GITHUB_OUTPUT
+
+    # 最新タグと比較し、新しいバージョンなら公開対象とする
+    - name: Check if version is new
+      id: check_version
+      run: |
+        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+        CURRENT_TAG="v${{ env.VERSION }}"
+        echo "Latest tag: $LATEST_TAG"
+        echo "Current version: $CURRENT_TAG"
+
+        if [ "$CURRENT_TAG" != "$LATEST_TAG" ]; then
+          echo "is_new_version=true" >> $GITHUB_OUTPUT
+        else
+          echo "is_new_version=false" >> $GITHUB_OUTPUT
+        fi
+
+    # 新しいバージョンのときだけ、すべての csproj をビルド
+    - name: Build all projects
+      if: steps.check_version.outputs.is_new_version == 'true'
+      run: |
+        for PROJ in ${{ steps.find_projects.outputs.projects }}; do
+          dotnet build "$PROJ" -c Release
+        done
+
+    # 新しいバージョンのときだけ、すべての csproj を pack
+    - name: Pack all projects
+      if: steps.check_version.outputs.is_new_version == 'true'
+      run: |
+        mkdir -p artifacts
+        for PROJ in ${{ steps.find_projects.outputs.projects }}; do
+          dotnet pack "$PROJ" -c Release -o ./artifacts
+        done
+
+    # Git タグを作成して push
+    - name: Create Git Tag
+      if: steps.check_version.outputs.is_new_version == 'true'
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git tag "v${{ env.VERSION }}"
+        git push origin "v${{ env.VERSION }}"
+
+    # GitHub Release を作成し、nupkg を添付
+    - name: Create GitHub Release
+      if: steps.check_version.outputs.is_new_version == 'true'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: "v${{ env.VERSION }}"
+        files: artifacts/*.nupkg
+        generate_release_notes: true
+
+    # NuGet.org に公開
+    - name: Push to NuGet
+      if: steps.check_version.outputs.is_new_version == 'true'
+      run: |
+        dotnet nuget push artifacts/*.nupkg \
+          --api-key ${{ secrets.NUGET_API_KEY }} \
+          --source https://api.nuget.org/v3/index.json \
+          --skip-duplicate
