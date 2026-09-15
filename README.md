@@ -1,5 +1,6 @@
 [![release](https://img.shields.io/github/v/release/tomokuni/EsUtil.Helper.ZenHanConverter?label=release)](https://github.com/tomokuni/EsUtil.Helper.ZenHanConverter/releases)
 [![nuget](https://img.shields.io/nuget/v/EsUtil.Helper.ZenHanConverter?label=nuget)](https://www.nuget.org/packages/EsUtil.Helper.ZenHanConverter)
+[![GitHub Packages](https://img.shields.io/badge/GitHub%20Packages-v1.0.0-2ea44f?logo=github)](https://github.com/tomokuni/EsUtil.Helper.ZenHanConverter/pkgs/nuget/EsUtil.Helper.ZenHanConverter)
 [![build](https://github.com/tomokuni/EsUtil.Helper.ZenHanConverter/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/tomokuni/EsUtil.Helper.ZenHanConverter/actions/workflows/build.yml)
 
 # ZenHanConverter ユーザー利用仕様書
@@ -12,12 +13,29 @@
 
 ## インストール
 
+### NuGet.org から
+
 ```powershell
 dotnet add package EsUtil.Helper.ZenHanConverter
 ```
 
 - NuGet ギャラリー: <https://www.nuget.org/packages/EsUtil.Helper.ZenHanConverter>
 - パッケージ名: `EsUtil.Helper.ZenHanConverter`
+
+### GitHub Packages から
+
+GitHub Packages は認証が必要なため、事前にソースと資格情報を登録します。
+
+```powershell
+# USERNAME は GitHub のユーザー名、TOKEN は read:packages 権限を持つ PAT を指定します
+dotnet nuget add source --username USERNAME --password TOKEN --store-password-in-clear-text --name github "https://nuget.pkg.github.com/tomokuni/index.json"
+
+dotnet add package EsUtil.Helper.ZenHanConverter
+```
+
+- GitHub Packages: <https://github.com/tomokuni/EsUtil.Helper.ZenHanConverter/pkgs/nuget/EsUtil.Helper.ZenHanConverter>
+- 初回公開時の可視性は **Private** です。他のユーザーが利用する場合は、パッケージ設定から可視性を変更してください。
+- GitHub Packages を併用すると、NuGet が全ソースへ問い合わせる都合で稀に `403` が出ることがあります。その場合は `nuget.config` の [Package Source Mapping](https://learn.microsoft.com/nuget/consume-packages/package-source-mapping) でソースを振り分けてください。
 
 ## 対応環境
 

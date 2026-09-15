@@ -1,14 +1,16 @@
-name: Publish to NuGet
+name: Publish
 
 on:
   push:
     branches: [ main ]   # main ブランチに push されたときに実行
   workflow_dispatch:     # 手動実行を許可（設定ミス後の再公開に必要）
 
-# NuGet Trusted Publishing (OIDC) を利用するため、長期 API キーや Secrets は不要
+# NuGet.org は Trusted Publishing (OIDC)、GitHub Packages は GITHUB_TOKEN で認証する。
+# どちらも Secrets への長期 API キー登録は不要。
 permissions:
   contents: write        # Git タグ作成 / GitHub Release 作成に必要
-  id-token: write        # Trusted Publishing の OIDC トークン発行に必要
+  id-token: write        # NuGet.org Trusted Publishing の OIDC トークン発行に必要
+  packages: write        # GitHub Packages への push に必要
 
 jobs:
   publish:
@@ -21,7 +23,8 @@ jobs:
         fetch-depth: 0
 
     # .NET SDK をセットアップ
-    # Trusted Publishing では API キーを扱わないため、NuGet ソースの認証設定は行わない
+    # NuGet.org は Trusted Publishing、GitHub Packages は GITHUB_TOKEN で認証するため、
+    # ここでは NuGet ソースの資格情報を設定しない
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
@@ -88,6 +91,31 @@ jobs:
           echo "公開対象なし（すべて公開済み）"
         fi
 
+    # GitHub Packages (NuGet レジストリ) をソースとして追加
+    # GITHUB_TOKEN で認証するため追加の Secrets は不要（Packages: Write 権限を使用）
+    - name: Add GitHub Packages source
+      env:
+        GH_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        dotnet nuget add source \
+          --username "${{ github.actor }}" \
+          --password "$GH_PACKAGES_TOKEN" \
+          --store-password-in-clear-text \
+          --name github \
+          "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+    # GitHub Packages へ公開する。
+    # NuGet.org に公開済みでも GitHub Packages に未公開のケースを取りこぼさないよう、
+    # 常に実行し --skip-duplicate で冪等にする（既存バージョンは 409 をスキップ）。
+    - name: Push to GitHub Packages
+      env:
+        GH_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        dotnet nuget push "artifacts/*.nupkg" \
+          --api-key "$GH_PACKAGES_TOKEN" \
+          --source "github" \
+          --skip-duplicate
+
     # Git タグを作成して push（既存タグは作成しない = 冪等）
     - name: Create Git Tag
       if: steps.select.outputs.has_new == 'true'
@@ -112,10 +140,10 @@ jobs:
         files: artifacts/*.nupkg
         generate_release_notes: true
 
-    # Trusted Publishing: GitHub の OIDC トークンを nuget.org が検証し、
+    # NuGet.org Trusted Publishing: GitHub の OIDC トークンを nuget.org が検証し、
     # 有効期限 1 時間の一時 API キーを払い出す（長期 API キー・Secrets は不要）
     # 一時キーは短命なため、push の直前に取得する
-    - name: NuGet login (OIDC -> temporary API key)
+    - name: NuGet.org login (OIDC -> temporary API key)
       if: steps.select.outputs.has_new == 'true'
       id: nuget_login
       uses: NuGet/login@v1
@@ -124,7 +152,7 @@ jobs:
         user: SEKIYA.Tomokuni
 
     # 未公開のパッケージのみ NuGet.org に公開
-    - name: Push to NuGet
+    - name: Push to NuGet.org
       if: steps.select.outputs.has_new == 'true'
       env:
         # 一時 API キーはログに出さないよう環境変数経由で渡す
