@@ -1,14 +1,30 @@
+[![release](https://img.shields.io/github/v/release/tomokuni/EsUtil.Helper.ZenHanConverter?label=release)](https://github.com/tomokuni/EsUtil.Helper.ZenHanConverter/releases)
+[![nuget](https://img.shields.io/nuget/v/EsUtil.Helper.ZenHanConverter?label=nuget)](https://www.nuget.org/packages/EsUtil.Helper.ZenHanConverter)
+[![build](https://github.com/tomokuni/EsUtil.Helper.ZenHanConverter/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/tomokuni/EsUtil.Helper.ZenHanConverter/actions/workflows/build.yml)
+
 # ZenHanConverter ユーザー利用仕様書
 
 ## 概要
+
 - 全角・半角・カタカナ/ひらがな・記号などの相互変換を提供するユーティリティです。
 - 変換定義は CSV からコード生成され、`ConvertPairs`/`EntryRecord` オブジェクトとして高速に扱えます。
 - 入力を正規化してから変換する複合メソッド (`ToHan`, `ToZenWithKatakana` など) を備え、アプリケーションの文字幅統一やデータクレンジングに利用できます。
 
+## インストール
+
+```powershell
+dotnet add package EsUtil.Helper.ZenHanConverter
+```
+
+- NuGet ギャラリー: <https://www.nuget.org/packages/EsUtil.Helper.ZenHanConverter>
+- パッケージ名: `EsUtil.Helper.ZenHanConverter`
+
 ## 対応環境
+
 - .NET 8 以上（ライブラリ本体）
 
 ## リリースビルド での ベンチマーク結果
+
 以下は、1000文字程度の混合テキスト（英数字・仮名・記号）を 10,000 回ループ処理した際の実行時間計測結果です。（.NET 8 Environment）
 
 | メソッド | 実行時間 (10,000回合計) | 1回あたりの平均 | 処理速度 (約) |
@@ -21,6 +37,7 @@
 ※ `ToNomalize` や `ToZen` 系は非常に高速です。
 
 ## 変換できる文字とカテゴリ
+
 - 数字: `０`～`９` ↔ `0`～`9`
 - 英字: 全角/半角の大文字・小文字 `Ａ`～`Ｚ`、`ａ`～`ｚ` ↔ `A`～`Z`、`a`～`z`
 - 記号: 括弧類、クォート類、区切り記号、算術/比較記号、`＼`/`\\`/`￥`/`¥`/スペース など
@@ -30,6 +47,7 @@
 - 特殊ケース: 細かな空白（ノーブレークスペース等）を通常スペースへ、各種ダッシュをハイフンへ正規化
 
 ## 主な API 詳説
+
 | メソッド | 内容 |
 | --- | --- |
 | string `ToNormalize(string text)` | 空白・ダッシュ・分離カナを正規化 |
@@ -49,6 +67,7 @@
 | string `ConvertBackslashToHanYen(string text)` | バックスラッシュを半角円記号へ |
 
 ### 使い方サンプル
+
 ```csharp
 using EsUtil.Helper;
 
@@ -104,9 +123,11 @@ var result = chained.Convert("◎○◯"); // "○◯●"
 ```
 
 ## 変換定義の直接利用
+
 - 主な API では対応しない細かな変換を行う場合、`GroupOf` クラス経由で定義済みの変換ペア (`ConvertPairs`) を取得できます。
 
 ### 定義グループ (`GroupOf`)
+
 `GroupOf` 静的クラス以下にカテゴリごとに分類されたプロパティが定義されています。
 
 | グループ (プロパティ) | 内容 |
@@ -118,6 +139,7 @@ var result = chained.Convert("◎○◯"); // "○◯●"
 例: `GroupOf.Ascii.ToHanMap`, `GroupOf.Kana.ToZenMap` など。
 
 ### `ConvertPairs` の使い方と変換方法
+
 | メソッド | 内容 |
 | --- | --- |
 | string `Convert(string text)` | 置換 |
@@ -126,21 +148,23 @@ var result = chained.Convert("◎○◯"); // "○◯●"
 | ConvertPairs `ChainMerge(ConvertPairs second)` | 未マッチも含めて結合 |
 
 ## 定義済みエントリ一覧 (GroupOf / NameOf)
+
 `GroupOf` クラスおよび `NameOf` クラスでアクセス可能な定義一覧です。
 `GroupOf.{カテゴリ}.{グループ}` で `ConvertPairs` を、`NameOf.{カテゴリ}.{定義名}` で個別の定義を取得できます。
 
 | カテゴリ (`GroupOf`) | グループ (`GroupOf`プロパティ) / 定義名 (`NameOf`プロパティ) |
 | --- | --- |
-| `Ascii`<br/>(英数字・記号) | ***`Numeric`*** (数字 グループ)<br/>`n0`: ０<br/>`n1`: １<br/>`n2`: ２<br/>`n3`: ３<br/>`n4`: ４<br/>`n5`: ５<br/>`n6`: ６<br/>`n7`: ７<br/>`n8`: ８<br/>`n9`: ９ |
-| `Ascii`<br/>(英数字・記号) | ***`Alphabet`*** (英字 グループ)<br/>※全角/半角、大文字/小文字の全パターンを網羅<br/>`A`: Ａ<br/>`B`: Ｂ<br/>`C`: Ｃ<br/>`D`: Ｄ<br/>`E`: Ｅ<br/>`F`: Ｆ<br/>`G`: Ｇ<br/>`H`: Ｈ<br/>`I`: Ｉ<br/>`J`: Ｊ<br/>`K`: Ｋ<br/>`L`: Ｌ<br/>`M`: Ｍ<br/>`N`: Ｎ<br/>`O`: Ｏ<br/>`P`: Ｐ<br/>`Q`: Ｑ<br/>`R`: Ｒ<br/>`S`: Ｓ<br/>`T`: Ｔ<br/>`U`: Ｕ<br/>`V`: Ｖ<br/>`W`: Ｗ<br/>`X`: Ｘ<br/>`Y`: Ｙ<br/>`Z`: Ｚ |
-| `Ascii`<br/>(英数字・記号) | ***`Symbol`*** (記号 グループ)<br/>`ParenthesisLeft`: 丸括弧 左<br/>`ParenthesisRight`: 丸括弧 右<br/>`SquareBracketLeft`: 角括弧 左<br/>`SquareBracketRight`: 角括弧 右<br/>`CurlyBracketLeft`: 波括弧 左<br/>`CurlyBracketRight`: 波括弧 右<br/>`DoubleQuote`: ダブルクォート<br/>`SingleQuote`: シングルクォート<br/>`Backquote`: バッククォート<br/>`Comma`: カンマ<br/>`Period`: ピリオド<br/>`Colon`: コロン<br/>`Semicolon`: セミコロン<br/>`LessThan`: 不等号 小<br/>`GreaterThan`: 不等号 大<br/>`Equal`: 等号<br/>`Plus`: プラス<br/>`HyphenMinus`: ハイフン<br/>`Question`: はてな<br/>`Exclamation`: 感嘆符<br/>`Sharp`: シャープ<br/>`Dollar`: ドル<br/>`Percent`: パーセント<br/>`Ampersand`: アンパサンド<br/>`Asterisk`: アスタリスク<br/>`At`: アットマーク<br/>`Caret`: キャレット<br/>`UnderBar`: アンダーバー<br/>`VerticalBar`: 縦棒<br/>`Tilde`: チルダ<br/>`Slash`: スラッシュ<br/>`Bslash`: 逆斜線 (U+005C)<br/>`Yen`: 円 (U+00A5)<br/>`Space`: スペース (U+3000 / U+0020) |
-| `Ascii`<br/>(英数字・記号) | ***`Replace`*** (置換・正規化 グループ)<br/>`Space`: 各種特殊空白を U+0020 へ<br/>`Hyphen`: 各種ダッシュ/マイナスを U+002D へ<br/>`Tab`: タブ (U+0009) を U+0020 へ<br/>`Yen`: 全角/半角円記号 ⇔ バックスラッシュ<br/>`Bslash`: バックスラッシュ ⇔ 円記号 |
-| `Kana`<br/>(かな) | ***`Kata`*** (カタカナ グループ)<br/>※清音/濁音/半濁音/小書き、結合文字含む<br/>`A`: ア<br/>`I`: イ<br/>`U`: ウ<br/>`E`: エ<br/>`O`: オ<br/>`KA`: カ<br/>`KI`: キ<br/>`KU`: ク<br/>`KE`: ケ<br/>`KO`: コ<br/>`SA`: サ<br/>`SHI`: シ<br/>`SU`: ス<br/>`SE`: セ<br/>`SO`: ソ<br/>`TA`: タ<br/>`CHI`: チ<br/>`TSU`: ツ<br/>`TE`: テ<br/>`TO`: ト<br/>`NA`: ナ<br/>`NI`: ニ<br/>`NU`: ヌ<br/>`NE`: ネ<br/>`NO`: ノ<br/>`HA`: ハ<br/>`HI`: ヒ<br/>`FU`: フ<br/>`HE`: ヘ<br/>`HO`: ホ<br/>`MA`: マ<br/>`MI`: ミ<br/>`MU`: ム<br/>`ME`: メ<br/>`MO`: モ<br/>`YA`: ヤ<br/>`YU`: ユ<br/>`YO`: ヨ<br/>`RA`: ラ<br/>`RI`: リ<br/>`RU`: ル<br/>`RE`: レ<br/>`RO`: ロ<br/>`WA`: ワ<br/>`WO`: ヲ<br/>`N`: ン<br/>`GA`～`PO`: 濁音・半濁音 (ガ, パ 等)<br/>`VU`: ヴ |
-| `Kana`<br/>(かな) | ***`Hira`*** (ひらがな グループ)<br/>※カタカナと同等のキー名でひらがな定義を提供<br/>`A`: あ<br/>`I`: い<br/>... (カタカナと同様の定義名) |
-| `Kana`<br/>(かな) | ***`Symbol`*** (かな記号 グループ)<br/>`Voice`: ゛ (濁点)<br/>`SemiVoice`: ゜ (半濁点)<br/>`Prolong`: ー (長音)<br/>`MiddleDot`: ・ (中点)<br/>`LeftCornerBracket`: 「<br/>`RightCornerBracket`: 」<br/>`Period`: 。 (句点)<br/>`Comma`: 、 (読点) |
-| `Kana`<br/>(かな) | ***`Case`*** (かな 大小/種別変換 グループ)<br/>※カタカナ⇔ひらがな変換用 (定義名は `Kata`/`Hira` と共通) |
+| `Ascii`</br>(英数字・記号) | ***`Numeric`*** (数字 グループ)</br>`n0`: ０</br>`n1`: １</br>`n2`: ２</br>`n3`: ３</br>`n4`: ４</br>`n5`: ５</br>`n6`: ６</br>`n7`: ７</br>`n8`: ８</br>`n9`: ９ |
+| `Ascii`</br>(英数字・記号) | ***`Alphabet`*** (英字 グループ)</br>※全角/半角、大文字/小文字の全パターンを網羅</br>`A`: Ａ</br>`B`: Ｂ</br>`C`: Ｃ</br>`D`: Ｄ</br>`E`: Ｅ</br>`F`: Ｆ</br>`G`: Ｇ</br>`H`: Ｈ</br>`I`: Ｉ</br>`J`: Ｊ</br>`K`: Ｋ</br>`L`: Ｌ</br>`M`: Ｍ</br>`N`: Ｎ</br>`O`: Ｏ</br>`P`: Ｐ</br>`Q`: Ｑ</br>`R`: Ｒ</br>`S`: Ｓ</br>`T`: Ｔ</br>`U`: Ｕ</br>`V`: Ｖ</br>`W`: Ｗ</br>`X`: Ｘ</br>`Y`: Ｙ</br>`Z`: Ｚ |
+| `Ascii`</br>(英数字・記号) | ***`Symbol`*** (記号 グループ)</br>`ParenthesisLeft`: 丸括弧 左</br>`ParenthesisRight`: 丸括弧 右</br>`SquareBracketLeft`: 角括弧 左</br>`SquareBracketRight`: 角括弧 右</br>`CurlyBracketLeft`: 波括弧 左</br>`CurlyBracketRight`: 波括弧 右</br>`DoubleQuote`: ダブルクォート</br>`SingleQuote`: シングルクォート</br>`Backquote`: バッククォート</br>`Comma`: カンマ</br>`Period`: ピリオド</br>`Colon`: コロン</br>`Semicolon`: セミコロン</br>`LessThan`: 不等号 小</br>`GreaterThan`: 不等号 大</br>`Equal`: 等号</br>`Plus`: プラス</br>`HyphenMinus`: ハイフン</br>`Question`: はてな</br>`Exclamation`: 感嘆符</br>`Sharp`: シャープ</br>`Dollar`: ドル</br>`Percent`: パーセント</br>`Ampersand`: アンパサンド</br>`Asterisk`: アスタリスク</br>`At`: アットマーク</br>`Caret`: キャレット</br>`UnderBar`: アンダーバー</br>`VerticalBar`: 縦棒</br>`Tilde`: チルダ</br>`Slash`: スラッシュ</br>`Bslash`: 逆斜線 (U+005C)</br>`Yen`: 円 (U+00A5)</br>`Space`: スペース (U+3000 / U+0020) |
+| `Ascii`</br>(英数字・記号) | ***`Replace`*** (置換・正規化 グループ)</br>`Space`: 各種特殊空白を U+0020 へ</br>`Hyphen`: 各種ダッシュ/マイナスを U+002D へ</br>`Tab`: タブ (U+0009) を U+0020 へ</br>`Yen`: 全角/半角円記号 ⇔ バックスラッシュ</br>`Bslash`: バックスラッシュ ⇔ 円記号 |
+| `Kana`</br>(かな) | ***`Kata`*** (カタカナ グループ)</br>※清音/濁音/半濁音/小書き、結合文字含む</br>`A`: ア</br>`I`: イ</br>`U`: ウ</br>`E`: エ</br>`O`: オ</br>`KA`: カ</br>`KI`: キ</br>`KU`: ク</br>`KE`: ケ</br>`KO`: コ</br>`SA`: サ</br>`SHI`: シ</br>`SU`: ス</br>`SE`: セ</br>`SO`: ソ</br>`TA`: タ</br>`CHI`: チ</br>`TSU`: ツ</br>`TE`: テ</br>`TO`: ト</br>`NA`: ナ</br>`NI`: ニ</br>`NU`: ヌ</br>`NE`: ネ</br>`NO`: ノ</br>`HA`: ハ</br>`HI`: ヒ</br>`FU`: フ</br>`HE`: ヘ</br>`HO`: ホ</br>`MA`: マ</br>`MI`: ミ</br>`MU`: ム</br>`ME`: メ</br>`MO`: モ</br>`YA`: ヤ</br>`YU`: ユ</br>`YO`: ヨ</br>`RA`: ラ</br>`RI`: リ</br>`RU`: ル</br>`RE`: レ</br>`RO`: ロ</br>`WA`: ワ</br>`WO`: ヲ</br>`N`: ン</br>`GA`～`PO`: 濁音・半濁音 (ガ, パ 等)</br>`VU`: ヴ |
+| `Kana`</br>(かな) | ***`Hira`*** (ひらがな グループ)</br>※カタカナと同等のキー名でひらがな定義を提供</br>`A`: あ</br>`I`: い</br>... (カタカナと同様の定義名) |
+| `Kana`</br>(かな) | ***`Symbol`*** (かな記号 グループ)</br>`Voice`: ゛ (濁点)</br>`SemiVoice`: ゜ (半濁点)</br>`Prolong`: ー (長音)</br>`MiddleDot`: ・ (中点)</br>`LeftCornerBracket`: 「</br>`RightCornerBracket`: 」</br>`Period`: 。 (句点)</br>`Comma`: 、 (読点) |
+| `Kana`</br>(かな) | ***`Case`*** (かな 大小/種別変換 グループ)</br>※カタカナ⇔ひらがな変換用 (定義名は `Kata`/`Hira` と共通) |
 
 ## パフォーマンス向上施策
+
 - Regex/辞書キャッシュ: `ConcurrentDictionary` でコンパイル済み Regex とマッピングをキャッシュし、再生成を回避。
 - 先勝ち辞書化: 同一 Source は初出のみ採用し、決定性と無駄な上書きを防止。
 - Unicode デコード先行: `EntryRecord` 生成時に `U+XXXX` を実体化し、実行時オーバーヘッドを削減。
@@ -149,4 +173,5 @@ var result = chained.Convert("◎○◯"); // "○◯●"
 - 連鎖変換の辞書化: `ConvertPairs.Chain` では第2段を Source ごとにグルーピングし、連結判定を O(1) に高速化。
 
 ## ライセンス
+
 本リポジトリの LICENSE を参照してください。
