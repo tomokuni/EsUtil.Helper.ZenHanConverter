@@ -21,22 +21,24 @@
 - `GroupOf_Ascii` / `GroupOf_Kana`: 各カテゴリ内の変換マップ (`ToHanMap`, `ToZenMap` 等) をプロパティとして公開。
 - `NameOf`: 定義されている個々のエントリ名へのアクセサ。
 
-### `ConvertMethod` に定義された複合 API (public static)
-- `ToNormalize(string text)`: 空白・ダッシュ・分離カナを正規化。
-- `ToHan(string text)`: 数字/英字/記号/カナを半角へ統一。
-- `ToZenWithKatakana(string text)`: 数字/英字/記号/半角カナを全角カタカナで統一。
-- `ToZenWithHiragana(string text)`: 数字/英字/記号/半角カナを全角ひらがなで統一。
+### `ZenHanConverter` に定義された複合 API (public static)
+- `ToNormalize(string text)`: 特殊空白 (→U+0020)・各種ダッシュ (→U+002D) を正規化し、分離した全角カナを合成。半角カナ同士 (`ｶ`+`ﾞ`) は対象外。
+- `ToHan(string text)`: 数字/英字/記号/カナ（長音/濁点含む）を半角へ統一。
+- `ToZenWithKatakana(string text)`: 全角化し、半角カナを全角カタカナへ統一（ひらがなは変換しない）。
+- `ToZenWithHiragana(string text)`: 全角化し、半角カナを全角ひらがなへ統一（全角カタカナは変換しない）。
 - `ToHanOnlyAscii(string text)`: 数字/英字/記号のみ半角化。
-- `ToZenOnlyAscii(string text)`: 数字/英字/記号のみ全角化。
-- `ToHanOnlyKana(string text)`: ひらがな/カタカナと関連記号を半角化。
-- `ToHanOnlyKatakana(string text)`: カタカナのみ半角化。
-- `ToZenKatakanaOnlyKatakana(string text)`: 半角カナを全角カタカナへ統一。
+- `ToZenOnlyAscii(string text)`: 数字/英字/記号のみ全角化（半角スペースは全角スペース U+3000 へ）。
+- `ToHanOnlyKana(string text)`: ひらがな/カタカナとかな記号を半角化（長音 `ー` は半角長音 `ｰ` へ）。
+- `ToHanOnlyKatakana(string text)`: カタカナとかな記号のみ半角化（ひらがなは変換しない）。
+- `ToZenOnlyKatakana(string text)`: 半角カナとかな記号を全角カタカナへ統一。
 - `ToZenKatakanaOnlyKana(string text)`: ひらがなと半角カナを全角カタカナへ統一。
 - `ToZenHiraganaOnlyKana(string text)`: カタカナ（全角/半角）をひらがなへ統一。
 - `ToUpperCase(string text)`: 全角/半角の英字を大文字へ。
 - `ToLowerCase(string text)`: 全角/半角の英字を小文字へ。
 - `ConvertTabToSpace(string text)`: タブを半角スペースへ。
 - `ConvertBackslashToHanYen(string text)`: バックスラッシュを半角円記号へ。
+
+※ `ToHan`・`ToZen` 系と `ToUpper`/`ToLowerCase` は内部で `ToNormalize` を適用する。
 
 ### `ConvertPairs` 系
 - 役割: `(Source, Target)` ペアを保持し、Regex を用いた置換や連鎖/統合を提供。
@@ -58,25 +60,78 @@
 ## 定義済みエントリ一覧 (GroupOf / NameOf)
 `GroupOf` クラスおよび `NameOf` クラスでアクセス可能な定義一覧です。
 `GroupOf.{カテゴリ}.{グループ}` で `ConvertPairs` を、`NameOf.{カテゴリ}.{定義名}` で個別の定義を取得できます。
+いずれも `EsUtil.Helper.ZenHanConverter` 名前空間に属します。
 
-| カテゴリ (`GroupOf`) | グループ (`GroupOf`プロパティ) / 定義名 (`NameOf`プロパティ) |
+### `GroupOf` の階層
+
+各ノードには変換方向ごとの `ConvertPairs` プロパティ (`ToHanMap` / `ToZenMap` / `ToUpperMap` / `ToLowerMap` / `ComposeMap` / `ToAsciiMap` / `FromAsciiMap` / `ToHiraMap` / `ToKataMap` / `ToASpaceMap` / `ToAHyphenMap` / `ToSpaceFromTabMap` / `ToYenFromBslashMap` / `ToBslashFromYenMap`) が定義されています。
+
+| パス | 内容 |
 | --- | --- |
-| `Ascii`<br/>(英数字・記号) | ***`Numeric`*** (数字 グループ)<br/>`n0`: ０<br/>`n1`: １<br/>`n2`: ２<br/>`n3`: ３<br/>`n4`: ４<br/>`n5`: ５<br/>`n6`: ６<br/>`n7`: ７<br/>`n8`: ８<br/>`n9`: ９ |
-| `Ascii`<br/>(英数字・記号) | ***`Alphabet`*** (英字 グループ)<br/>※全角/半角、大文字/小文字の全パターンを網羅<br/>`A`: Ａ<br/>`B`: Ｂ<br/>`C`: Ｃ<br/>`D`: Ｄ<br/>`E`: Ｅ<br/>`F`: Ｆ<br/>`G`: Ｇ<br/>`H`: Ｈ<br/>`I`: Ｉ<br/>`J`: Ｊ<br/>`K`: Ｋ<br/>`L`: Ｌ<br/>`M`: Ｍ<br/>`N`: Ｎ<br/>`O`: Ｏ<br/>`P`: Ｐ<br/>`Q`: Ｑ<br/>`R`: Ｒ<br/>`S`: Ｓ<br/>`T`: Ｔ<br/>`U`: Ｕ<br/>`V`: Ｖ<br/>`W`: Ｗ<br/>`X`: Ｘ<br/>`Y`: Ｙ<br/>`Z`: Ｚ |
-| `Ascii`<br/>(英数字・記号) | ***`Symbol`*** (記号 グループ)<br/>`ParenthesisLeft`: 丸括弧 左<br/>`ParenthesisRight`: 丸括弧 右<br/>`SquareBracketLeft`: 角括弧 左<br/>`SquareBracketRight`: 角括弧 右<br/>`CurlyBracketLeft`: 波括弧 左<br/>`CurlyBracketRight`: 波括弧 右<br/>`DoubleQuote`: ダブルクォート<br/>`SingleQuote`: シングルクォート<br/>`Backquote`: バッククォート<br/>`Comma`: カンマ<br/>`Period`: ピリオド<br/>`Colon`: コロン<br/>`Semicolon`: セミコロン<br/>`LessThan`: 不等号 小<br/>`GreaterThan`: 不等号 大<br/>`Equal`: 等号<br/>`Plus`: プラス<br/>`HyphenMinus`: ハイフン<br/>`Question`: はてな<br/>`Exclamation`: 感嘆符<br/>`Sharp`: シャープ<br/>`Dollar`: ドル<br/>`Percent`: パーセント<br/>`Ampersand`: アンパサンド<br/>`Asterisk`: アスタリスク<br/>`At`: アットマーク<br/>`Caret`: キャレット<br/>`UnderBar`: アンダーバー<br/>`VerticalBar`: 縦棒<br/>`Tilde`: チルダ<br/>`Slash`: スラッシュ<br/>`Bslash`: 逆斜線 (U+005C)<br/>`Yen`: 円 (U+00A5)<br/>`Space`: スペース (U+3000 / U+0020) |
-| `Ascii`<br/>(英数字・記号) | ***`Replace`*** (置換・正規化 グループ)<br/>`Space`: 各種特殊空白を U+0020 へ<br/>`Hyphen`: 各種ダッシュ/マイナスを U+002D へ<br/>`Tab`: タブ (U+0009) を U+0020 へ<br/>`Yen`: 全角/半角円記号 ⇔ バックスラッシュ<br/>`Bslash`: バックスラッシュ ⇔ 円記号 |
-| `Kana`<br/>(かな) | ***`Kata`*** (カタカナ グループ)<br/>※清音/濁音/半濁音/小書き、結合文字含む<br/>`A`: ア<br/>`I`: イ<br/>`U`: ウ<br/>`E`: エ<br/>`O`: オ<br/>`KA`: カ<br/>`KI`: キ<br/>`KU`: ク<br/>`KE`: ケ<br/>`KO`: コ<br/>`SA`: サ<br/>`SHI`: シ<br/>`SU`: ス<br/>`SE`: セ<br/>`SO`: ソ<br/>`TA`: タ<br/>`CHI`: チ<br/>`TSU`: ツ<br/>`TE`: テ<br/>`TO`: ト<br/>`NA`: ナ<br/>`NI`: ニ<br/>`NU`: ヌ<br/>`NE`: ネ<br/>`NO`: ノ<br/>`HA`: ハ<br/>`HI`: ヒ<br/>`FU`: フ<br/>`HE`: ヘ<br/>`HO`: ホ<br/>`MA`: マ<br/>`MI`: ミ<br/>`MU`: ム<br/>`ME`: メ<br/>`MO`: モ<br/>`YA`: ヤ<br/>`YU`: ユ<br/>`YO`: ヨ<br/>`RA`: ラ<br/>`RI`: リ<br/>`RU`: ル<br/>`RE`: レ<br/>`RO`: ロ<br/>`WA`: ワ<br/>`WO`: ヲ<br/>`N`: ン<br/>`GA`～`PO`: 濁音・半濁音 (ガ, パ 等)<br/>`VU`: ヴ |
-| `Kana`<br/>(かな) | ***`Hira`*** (ひらがな グループ)<br/>※カタカナと同等のキー名でひらがな定義を提供<br/>`A`: あ<br/>`I`: い<br/>... (カタカナと同様の定義名) |
-| `Kana`<br/>(かな) | ***`Symbol`*** (かな記号 グループ)<br/>`Voice`: ゛ (濁点)<br/>`SemiVoice`: ゜ (半濁点)<br/>`Prolong`: ー (長音)<br/>`MiddleDot`: ・ (中点)<br/>`LeftCornerBracket`: 「<br/>`RightCornerBracket`: 」<br/>`Period`: 。 (句点)<br/>`Comma`: 、 (読点) |
-| `Kana`<br/>(かな) | ***`Case`*** (かな 大小/種別変換 グループ)<br/>※カタカナ⇔ひらがな変換用 (定義名は `Kata`/`Hira` と共通) |
+| `GroupOf.Ascii` | 英数字・記号の全定義 |
+| `GroupOf.Ascii.Numeric.Number` | 数字 `０`～`９` ↔ `0`～`9` |
+| `GroupOf.Ascii.Alphabet` | 英字の全定義 |
+| `GroupOf.Ascii.Alphabet.Han` / `.Zen` | 半角英字 / 全角英字の大文字⇔小文字 |
+| `GroupOf.Ascii.Alphabet.Large` / `.Small` | 英大文字 / 英小文字の全角⇔半角 |
+| `GroupOf.Ascii.Symbol` | 記号の全定義（34 パターン） |
+| `GroupOf.Ascii.Symbol.Bracket` / `.Fin` / `.Ope` / `.Punc` | 括弧 / 末尾記号 / 演算子 / 句読点 |
+| `GroupOf.Ascii.Replace` | 置換・正規化 |
+| `GroupOf.Ascii.Replace.Fringe` | 特殊空白・各種ダッシュの正規化 |
+| `GroupOf.Ascii.Replace.Han` / `.Zen` | 半角円記号 / 全角円記号とバックスラッシュの相互変換 |
+| `GroupOf.Kana` | かなの全定義 |
+| `GroupOf.Kana.Kata` | カタカナ（81 パターン） |
+| `GroupOf.Kana.Kata.Large` / `.Small` | カタカナ 清音/濁音/半濁音 / 小書き文字 |
+| `GroupOf.Kana.Kata.ZZ` / `.ZH` / `.HZ` | 分離カタカナの合成（全-全 / 全-半 / 半-全） |
+| `GroupOf.Kana.Hira` | ひらがな |
+| `GroupOf.Kana.Hira.Large` / `.Small` | ひらがな 清音/濁音/半濁音 / 小書き文字 |
+| `GroupOf.Kana.Hira.ZZ` / `.ZH` | 分離ひらがなの合成（全-全 / 全-半） |
+| `GroupOf.Kana.Symbol` | かな記号 |
+| `GroupOf.Kana.Symbol.Voice` / `.Han` / `.Zen` / `.Punc` | 濁点・半濁点 / 半角かな記号 / 全角かな記号 / 句読点 |
+| `GroupOf.Kana.Case` | カタカナ⇔ひらがな (`ToHiraMap` / `ToKataMap`) |
+| `GroupOf.Kana.Case.Large` / `.Small` | かな 清音等 / 小書き文字 |
+
+### `NameOf` の階層
+
+| パス | 内容 |
+| --- | --- |
+| `NameOf.Ascii.n0`～`n9` | 数字 `０`～`９` |
+| `NameOf.Ascii.A`～`Z` | 英字。`.Large`(英大文字の全⇔半)、`.Small`(英小文字の全⇔半)、`.Han`(半角の大⇔小)、`.Zen`(全角の大⇔小) |
+| `NameOf.Ascii.ParenthesisLeft` ほか | 記号（後述の記号名一覧を参照） |
+| `NameOf.Ascii.Space.Symbol` / `.Replace` | スペース |
+| `NameOf.Ascii.Bslash.Symbol` / `.Replace.Han` / `.Replace.Zen` | バックスラッシュ |
+| `NameOf.Ascii.Yen.Symbol` / `.Replace.Han` / `.Replace.Zen` | 円記号 |
+| `NameOf.Ascii.Hyphen` / `.Tab` | 各種ダッシュ / タブ |
+| `NameOf.Kana.{A, I, U, E, O, KA, KI, ..., N, GA, ..., VU}` | かな。`.Kata`(カタカナ)、`.Hira`(ひらがな)、`.Case`(カタカナ⇔ひらがな) |
+| `NameOf.Kana.Voice` / `.SemiVoice` | 濁点 `゛` / 半濁点 `゜` |
+| `NameOf.Kana.MiddleDot` | 中点 `・` |
+| `NameOf.Kana.Prolong.Voice` / `.Han` / `.Zen` | 長音 `ー` / `ｰ` |
+| `NameOf.Kana.LeftCornerBracket` / `.RightCornerBracket` | かぎ括弧 `「` / `」` |
+| `NameOf.Kana.Period.Punc` / `.Han` / `.Zen` | 句点 `。` / `｡` |
+| `NameOf.Kana.Comma.Punc` / `.Han` / `.Zen` | 読点 `、` / `､` |
+
+### `NameOf.Ascii` の記号名一覧
+
+| 定義名 | 内容 |
+| --- | --- |
+| `ParenthesisLeft` / `ParenthesisRight` | 丸括弧 左 / 右 |
+| `SquareBracketLeft` / `SquareBracketRight` | 角括弧 左 / 右 |
+| `CurlyBracketLeft` / `CurlyBracketRight` | 波括弧 左 / 右 |
+| `DoubleQuote` / `SingleQuote` / `Backquote` | ダブルクォート / シングルクォート / バッククォート |
+| `Comma` / `Period` / `Colon` / `Semicolon` | カンマ / ピリオド / コロン / セミコロン |
+| `LessThan` / `GreaterThan` / `Equal` | 不等号 小 / 不等号 大 / 等号 |
+| `Plus` / `HyphenMinus` / `Tilde` / `Slash` | プラス / ハイフン / チルダ / スラッシュ |
+| `Question` / `Exclamation` | はてな / 感嘆符 |
+| `Sharp` / `Dollar` / `Percent` | シャープ / ドル / パーセント |
+| `Ampersand` / `Asterisk` / `At` | アンパサンド / アスタリスク / アットマーク |
+| `Caret` / `UnderBar` / `VerticalBar` | キャレット / アンダーバー / 縦棒 |
 
 ## 変換定義のカバレッジ
 - 数値: `０`～`９` ↔ `0`～`9`。
 - 英字: 全角大文字/小文字と半角大文字/小文字を相互変換。ケース変換対応。
 - 記号: 括弧、クォート、区切り記号、算術/比較記号、`￥`記号等。
 - カタカナ/ひらがな: 清音/濁音/半濁音/小書き/長音/中点/句読点/カギ括弧を全角/半角で相互変換。
-- 分離カナ合成: `カ`+`゛` などの分離形を合成ルール (`KataCompose`) で正規化。
-- フリンジ空白・ダッシュ: ノーブレークスペースや各種ダッシュを正規化 (`FringeCase`)。
+- 分離カナ合成: `カ`+`゛` などの分離形を合成ルール (`GroupOf.Kana.Kata.ComposeMap` / `GroupOf.Kana.Hira.ComposeMap`) で正規化。全角+全角 / 全角+半角が対象。
+- フリンジ空白・ダッシュ: ノーブレークスペースや各種ダッシュを正規化 (`GroupOf.Ascii.Replace.Fringe`)。
 
 ## 内部実装ポリシー
 - 文字列比較は `StringComparer.Ordinal` を原則使用。
@@ -92,6 +147,19 @@
 - **null/空の早期スキップ**: 変換不要ケースを早期 return。
 - **不変リストのスライス展開**: `[..]` 構文による効率的なリスト構築。
 - **連鎖処理の辞書化**: `ConvertPairs` 連鎖時に第2段を辞書化 (`GroupBy` + `ToDictionary`) し、結合の線形走査を削減。
+
+## リリースビルドでのベンチマーク結果
+
+1000 文字程度の混合テキスト（英数字・仮名・記号）を 10,000 回ループ処理した際の実測値です（.NET 8 / Release）。
+
+| メソッド | 実行時間 (10,000回合計) | 1回あたりの平均 |
+| --- | --- | --- |
+| `ToNormalize` | 131 ms | 13.1 µs |
+| `ToHan` | 1585 ms | 158.5 µs |
+| `ToZenWithKatakana` | 179 ms | 17.9 µs |
+
+- `ToHan` は変換パターンが最多 (`GroupOf.Ascii` + `GroupOf.Kana` 全域) のため相対的に遅いが、10k 文字/ms 級のスループットを確保。
+- `ToNormalize` と `ToZen` 系は `ConvertPairs` のキャッシュが効き、数 µs オーダーで完了する。
 
 ## 注意事項
 - 生成物 (`Generated.cs`) は CSV 変更時に再生成が必要。
