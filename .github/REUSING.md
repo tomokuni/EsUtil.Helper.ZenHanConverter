@@ -29,7 +29,7 @@
 | `buildScript/*_publish_*.bat` を実行して配布物を作る | `dotnet pack` で nupkg を作る |
 | `publish.yml`（配布物の作成・保管） | `publish.yml`（pack・保管・**NuGet.org / GitHub Packages への公開**） |
 | `release.yml` が UI の成果物を Release へ添付 | `release.yml` が nupkg を Release へ添付 |
-| バージョン更新のみのコミットでは publish をスキップ | スキップしない（pack はビルド時に `GeneratePackageOnBuild` が行うため、省く工程がない） |
+| バージョン更新のみのコミットでは publish をスキップ | スキップしない（pack のコストが小さく、公開物と版の一致を常に検証できるため） |
 
 ## 手順
 
@@ -110,8 +110,10 @@
 ```
 
 - `.slnx` を読むには新しい SDK（9 以降）が必要です。`.sln` や個別の csproj を使う場合は `dotnet-version` も合わせて変更してください。
-- **nupkg を保管するステップのパス**（`src/bin/Release/*.nupkg`）を、`GeneratePackageOnBuild` の出力先に合わせます。
 - テストが無い・不要な場合はテストのステップを削除します。
+- **`GeneratePackageOnBuild` は使わないでください。** これを有効にすると、クリーンな状態の `dotnet pack` が
+  `NU5026`（パックする dll が見つからない）で失敗します。`build` でビルドしてから
+  `pack --no-build` を実行する形にしてください（本リポジトリの `build.yml` / `publish.yml` が参考になります）。
 
 ### 4. NuGet.org の Trusted Publishing ポリシーを登録する
 

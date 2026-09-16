@@ -82,9 +82,15 @@ jobs:
           VERSION_FILE: ${{ needs.config.outputs.version_file }}
         run: ./.github/scripts/set-version.ps1 -Version $env:VERSION -VersionFile $env:VERSION_FILE | Out-Null
 
+      # pack の前に明示的にビルドする。
+      # GeneratePackageOnBuild に頼ると、クリーンな状態の dotnet pack が
+      # NU5026（パックする dll が見つからない）で失敗するため、工程を分けて実行する
+      - name: ${{ matrix.package.name }} をビルド
+        run: dotnet build '${{ matrix.package.project }}' -c Release
+
       - name: ${{ matrix.package.name }} を pack
         # プロジェクトのパスは設定（release-config.json）が持つ
-        run: dotnet pack '${{ matrix.package.project }}' -c Release -o ./artifacts
+        run: dotnet pack '${{ matrix.package.project }}' -c Release --no-build -o ./artifacts
 
       # この成果物は公開（push ジョブ）と、Release への添付（release.yml）で使う
       - name: 成果物をアップロード

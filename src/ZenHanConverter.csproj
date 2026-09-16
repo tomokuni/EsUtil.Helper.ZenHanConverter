@@ -27,7 +27,6 @@
     <Authors>SEKIYA Tomokuni</Authors>
     <Company>Estable</Company>
     <Copyright>SEKIYA Tomokuni</Copyright>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
     <SignAssembly>False</SignAssembly>

@@ -20,6 +20,9 @@ packages/
 # Local NuGet source
 local-nuget/
 
+# Pack の出力先（ワークフローと RELEASE.md のローカル確認で使用）
+artifacts/
+
 # BenchmarkDotNet
 BenchmarkDotNet.Artifacts/
 

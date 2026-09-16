@@ -194,6 +194,19 @@ semver 形式で入力します。数値部分の**先頭 0 は使用できま�
 - 失敗した実行を「Re-run」しても**その実行時のワークフロー定義**が使われるため、定義を修正した場合は再実行せず、新しく `Run workflow` してください。
 - `release` ジョブがバージョンをコミットした後に失敗した場合、ブランチの先頭コミットが変わるため**ゲート（条件 2）が未充足**になります。`Actions` → **Build** の成功を待ってから再実行してください。
 
+### `publish / pack` が `NU5026` で失敗する場合
+
+`NU5026`（パックする dll が見つからない）は、`dotnet pack` がビルド出力を作る前にパッケージ化しようとしたときに発生します。
+本リポジトリでは `GeneratePackageOnBuild` を使わず、**`build` → `pack --no-build` の順に実行**することで回避しています。
+
+```text
+error NU5026: パックされるファイル '.../src/bin/Release/net10.0/EsUtil.Helper.ZenHanConverter.dll' がディスクに見つかりません。
+```
+
+- `src/ZenHanConverter.csproj` に `GeneratePackageOnBuild` を戻さないでください。
+  有効にすると `dotnet pack` 単体がクリーンな状態（`bin`/`obj` が無い状態）で必ず失敗します。
+- 同じ理由で `dotnet pack --no-build` は**必ず `build` の後に**実行します。
+
 ## リリース後の検証（バージョンコミット）
 
 リリース時のバージョン更新コミットは `GITHUB_TOKEN` による push のため、`build.yml` が自動では起動しません（`GITHUB_TOKEN` の push はワークフローを起動しない）。
@@ -221,6 +234,11 @@ $info.prerelease    # -> False
 dotnet restore ZenHanConverter.slnx
 dotnet build ZenHanConverter.slnx -c Release --no-restore
 dotnet test ZenHanConverter.slnx -c Release --no-build
+
+# 公開物の確認（publish.yml と同一の順序。build してから pack する）
+dotnet build src/ZenHanConverter.csproj -c Release
+dotnet pack src/ZenHanConverter.csproj -c Release --no-build -o ./artifacts
+Get-ChildItem ./artifacts   # -> EsUtil.Helper.ZenHanConverter.<version>.nupkg
 ```
 
 バージョンの規則（形式・比較）だけを確認する場合は、ライブラリを直接使えます。

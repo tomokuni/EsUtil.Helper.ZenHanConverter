@@ -7,7 +7,7 @@
 # この実行結果はリリースの前提（ゲート）になる。Release ワークフローは、リリース対象コミットに対する
 # 本ワークフローの成功実行が存在することを確認してから Release を作成する。
 #
-# パッケージング（dotnet pack）はビルド時に GeneratePackageOnBuild が行うため、
+# パッケージング（dotnet pack）も本ワークフローで検証する。
 # 本ワークフローの成功は「パッケージが作成できる」ことも意味する。
 #
 # README の「build」バッジはこのワークフローの status を表示する（badge.svg?branch=main）。
@@ -56,11 +56,14 @@ jobs:
       - name: テスト（Release）
         run: dotnet test ZenHanConverter.slnx -c Release --no-build
 
-      # GeneratePackageOnBuild によりビルドで nupkg が生成される。公開はしないが、内容の確認用に保管する
+      # 公開はしないが、pack が通ることを検証し、内容の確認用に nupkg を保管する
+      - name: パッケージを作成
+        run: dotnet pack src/ZenHanConverter.csproj -c Release --no-build -o ./artifacts
+
       - name: パッケージを保管
         uses: actions/upload-artifact@v6
         with:
           name: nupkg
-          path: src/bin/Release/*.nupkg
+          path: artifacts/*.nupkg
           if-no-files-found: error
           retention-days: ${{ steps.config.outputs.retention }}
