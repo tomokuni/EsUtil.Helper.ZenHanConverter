@@ -87,6 +87,14 @@ public class ConvertPairsTests
     }
 
     [Fact]
+    public void Empty_同一インスタンスを返す()
+    {
+        // 遅延初期化した結果を共有し、呼び出しごとの再生成を避ける
+        Assert.Same(ConvertPairs.Empty, ConvertPairs.Empty);
+        Assert.Empty(ConvertPairs.Empty.ToList());
+    }
+
+    [Fact]
     public void Func_同一キーはキャッシュ共有()
     {
         var first = ConvertPairs.FromFunc("key", () => new ConvertPairs([("a", "A")]));

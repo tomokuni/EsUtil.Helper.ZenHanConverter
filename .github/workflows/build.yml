@@ -39,7 +39,7 @@ jobs:
       - name: .NET SDK をセットアップ
         uses: actions/setup-dotnet@v5
         with:
-          # ライブラリは net8.0 を対象とするが、.slnx の読み込みと最新のテスト SDK のため新しい SDK を使う
+          # ライブラリとテストは共に net10.0（C# 14）を対象とする
           dotnet-version: '10.0.x'
 
       - name: 保管期間を設定から読む

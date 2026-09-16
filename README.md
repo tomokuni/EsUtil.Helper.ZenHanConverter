@@ -3,6 +3,8 @@
 [![nuget](https://img.shields.io/nuget/v/EsUtil.Helper.ZenHanConverter?label=nuget)](https://www.nuget.org/packages/EsUtil.Helper.ZenHanConverter)
 [![GitHub Packages](https://img.shields.io/badge/GitHub%20Packages-v1.0.0-2ea44f?logo=github)](https://github.com/tomokuni/EsUtil.Helper.ZenHanConverter/pkgs/nuget/EsUtil.Helper.ZenHanConverter)
 [![build](https://github.com/tomokuni/EsUtil.Helper.ZenHanConverter/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/tomokuni/EsUtil.Helper.ZenHanConverter/actions/workflows/build.yml)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/10.0)
+[![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-0078D4)](https://dotnet.microsoft.com/platform/support/policy/dotnet-core)
 
 # ZenHanConverter ユーザー利用仕様書
 
@@ -40,20 +42,22 @@ dotnet add package EsUtil.Helper.ZenHanConverter
 
 ## 対応環境
 
-- .NET 8 以上（ライブラリ本体）
+- **.NET 10 以上**（ライブラリ本体。C# 14 で実装）
+- OS に依存しないため、Windows / Linux / macOS のいずれでも動作します。
+- テストはライブラリと同じ `net10.0` を対象に実行しています。
 
 ## リリースビルド での ベンチマーク結果
 
-以下は、1000文字程度の混合テキスト（英数字・仮名・記号）を 10,000 回ループ処理した際の実行時間計測結果です。（.NET 8 Environment）
+1000 文字の混合テキスト（英数字・全角/半角カナ・ひらがな・記号）を 10,000 回ループ処理した際の実行時間計測結果です（.NET 10 / Release / x64）。
 
-| メソッド | 実行時間 (10,000回合計) | 1回あたりの平均 | 処理速度 (約) |
+| メソッド | 実行時間 (10,000回合計) | 1回あたりの平均 | スループット (約) |
 | --- | --- | --- | --- |
-| `ToNormalize` | 131 ms | 0.013 ms | 13.1 µs |
-| `ToHan` | 1585 ms | 0.159 ms | 158.5 µs |
-| `ToZenWithKatakana` | 179 ms | 0.018 ms | 17.9 µs |
+| `ToNormalize` | 74 ms | 7.4 µs | 130 MB/s |
+| `ToHan` | 708 ms | 70.8 µs | 13.5 MB/s |
+| `ToZenWithKatakana` | 432 ms | 43.2 µs | 22.1 MB/s |
 
-※ `ToHan` は変換対象のパターンが多く (`Ascii` + `Kana` 全域)、正規表現のマッチング負荷が高いため相対的に時間を要しますが、それでも 10k 文字/ms 級 (6MB/s程度) のスループットが出ています。
-※ `ToNormalize` や `ToZen` 系は非常に高速です。
+※ `ToHan` は変換対象のパターンが最も多く (`GroupOf.Ascii` + `GroupOf.Kana` の全域)、正規表現のマッチング負荷が高いため相対的に時間を要します。
+※ `ToNormalize` は正規化のみのため最も高速です。
 
 ## 変換できる文字とカテゴリ
 
@@ -87,6 +91,39 @@ dotnet add package EsUtil.Helper.ZenHanConverter
 
 > `ToHan`・`ToZen` 系と `ToUpper`/`ToLowerCase` は内部で `ToNormalize` を適用します。
 > `ToNormalize` のカナ合成は **全角カナ同士 / 全角+半角濁点** が対象で、半角カナ同士 (`ｶ`+`ﾞ`) は変化しません。
+
+### 拡張メンバー（文字列に直接チェーンできる API）
+
+上記の表のメソッドは、C# 14 の**拡張メンバー**として **文字列のインスタンス メソッドと同じ形**でも呼び出せます。
+`using EsUtil.Helper.ZenHanConverter;` を記述するだけで利用できます。
+
+| 拡張メンバー | 内容 |
+| --- | --- |
+| string `ToNormalize()` | 特殊空白・各種ダッシュを正規化し、分離した全角カナを合成 |
+| string `ToHan()` | 数字/英字/記号/カナを半角へ統一 |
+| string `ToZenWithKatakana()` | 半角カナを全角カタカナへ統一 |
+| string `ToZenWithHiragana()` | 半角カナを全角ひらがなへ統一 |
+| string `ToHanOnlyAscii()` / `ToZenOnlyAscii()` | 数字・英字・記号のみ半角化 / 全角化 |
+| string `ToHanOnlyKana()` / `ToHanOnlyKatakana()` | かな / カタカナのみ半角化 |
+| string `ToZenOnlyKatakana()` / `ToZenKatakanaOnlyKana()` | 半角カナを全角カタカナへ / かなを全角カタカナへ |
+| string `ToZenHiraganaOnlyKana()` | カタカナ（全/半）をひらがなへ |
+| string `ToUpperCase()` / `ToLowerCase()` | 全角/半角英字を大文字 / 小文字へ |
+| string `ConvertTabToSpace()` / `ConvertBackslashToHanYen()` | タブ / バックスラッシュの置換 |
+| bool `IsEmpty` | 変換ペアを 1 件も含まないか（`ConvertPairs` やペアの列挙で利用） |
+| ConvertPairs `ToConvertPairs()` | ペア集合から `ConvertPairs` を生成 |
+
+```csharp
+using EsUtil.Helper.ZenHanConverter;
+
+// 静的 API の代わりに、文字列から直接チェーンできる
+var han = "ＡＢＣ１２３　カナ。".ToHan();                          // "ABC123 ｶﾅ｡"
+var zen = "ABC123 ｶﾀｶﾅ かな".ToZenWithKatakana();               // "ＡＢＣ１２３　カタカナ　かな"
+var normalized = "カ゛\u00A0\u2010".ToNormalize();              // "ガ -"
+
+// ペア集合への拡張
+var isEmpty = GroupOf.Ascii.ToHanMap.IsEmpty;                    // false
+var pairs = new[] { ("◎", "○"), ("○", "◯") }.ToConvertPairs();
+```
 
 ### 使い方サンプル
 

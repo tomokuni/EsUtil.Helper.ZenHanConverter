@@ -12,7 +12,15 @@ namespace EsUtil.Helper.ZenHanConverter;
 public partial class Define
 {
     /// <summary>CSV から生成した変換定義の一覧</summary>
-    public static ImmutableList<EntryRecord> AllList =>
+    /// <remarks>初回アクセス時に生成し、以降は同じインスタンスを返します（C# 14 の field による遅延初期化）。<br/></remarks>
+    public static ImmutableList<EntryRecord> AllList
+    {
+        get => field ??= CreateAllList();
+    }
+
+    /// <summary>CSV から生成した変換定義の一覧を生成します。</summary>
+    /// <returns>CSV の全エントリを含む不変リスト</returns>
+    private static ImmutableList<EntryRecord> CreateAllList() =>
     [
         // Category, Group, SubGroup, Forward, Inverse, Source, Target, Name, Summary
         ("Ascii", "Numeric", "Number", "ToHan", "ToZen", "０", "0", "n0", "０ (数字) <全角-半角 変換>"),

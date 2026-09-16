@@ -23,6 +23,13 @@ public class ConvertDefineTests
     }
 
     [Fact]
+    public void AllList_同一インスタンスを返す()
+    {
+        // 遅延初期化した結果を共有し、アクセスごとの再構築を避ける
+        Assert.Same(Define.AllList, Define.AllList);
+    }
+
+    [Fact]
     public void Ascii_ZenToHan_数値変換()
     {
         var list = GroupOf.Ascii.ToHanMap;

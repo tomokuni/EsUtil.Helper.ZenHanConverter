@@ -11,9 +11,10 @@ public static partial class Helper
     /// <param name="s">変換対象の文字列（例: "U+3042" または "U+3042 U+3044"）</param>
     /// <returns>変換後の文字列</returns>
     public static string DecodeUnicodeNotation(string s)
-        => DecodeUnicodeNotationRegex().Replace(s, m =>
+        => DecodeUnicodeNotationRegex().Replace(s, static m =>
         {
-            var hex = m.Groups[1].Value;
+            // 捕捉した 16 進表記を string 化せず ReadOnlySpan<char> のまま解析し、割り当てを 1 件分削減する
+            var hex = m.Groups[1].ValueSpan;
             return int.TryParse(hex, System.Globalization.NumberStyles.HexNumber, null, out int cp)
                 && cp <= 0x10FFFF && (cp < 0xD800 || cp > 0xDFFF)
                 ? char.ConvertFromUtf32(cp)

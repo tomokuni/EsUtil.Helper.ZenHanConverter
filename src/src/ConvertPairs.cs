@@ -35,7 +35,6 @@ public partial record ConvertPairs : IEnumerable<(string Source, string Target)>
         }
     }
     private readonly object _lock = new();
-    private (Regex Regex, Dictionary<string, string> Map)? _compiledCache;
 
     /// <summary>即時初期化用コンストラクタ</summary>
     public ConvertPairs(IEnumerable<(string Source, string Target)> pairs)
@@ -86,7 +85,11 @@ public partial record ConvertPairs : IEnumerable<(string Source, string Target)>
 
 
     /// <summary>空の変換リストを取得します。</summary>
-    public static ConvertPairs Empty => new([]);
+    /// <remarks>初回アクセス時に生成して共有します（バッキング フィールドを持たない遅延初期化）。<br/></remarks>
+    public static ConvertPairs Empty
+    {
+        get => field ??= new([]);
+    }
 
 
     /// <summary>複数のペア集合を平坦化して初期化します。</summary>
@@ -172,27 +175,14 @@ public partial record ConvertPairs : IEnumerable<(string Source, string Target)>
             return text ?? string.Empty;
         }
 
-        // ダブルチェックロッキングによる遅延初期化
-        if (_compiledCache == null)
+        // 遅延初期化された変換キャッシュを取得する（変換元が空の場合は生成されない）
+        var compiled = Compiled;
+        if (compiled == null)
         {
-            lock (_lock)
-            {
-                if (_compiledCache == null)
-                {
-                    var values = this.Values;
-                    var regex = CreateConvertRegex(values);
-                    if (regex == null)
-                    {
-                        return text;
-                    }
-
-                    var map = CreateConvertMap(values);
-                    _compiledCache = (regex, map);
-                }
-            }
+            return text;
         }
 
-        var (regexRef, mapRef) = _compiledCache.Value;
+        var (regexRef, mapRef) = compiled.Value;
         return regexRef.Replace(text, m =>
         {
             var value = m.Value;
@@ -200,6 +190,41 @@ public partial record ConvertPairs : IEnumerable<(string Source, string Target)>
                 ? replacement
                 : value;
         });
+    }
+
+    /// <summary>変換に使用する正規表現と変換マップを保持します。</summary>
+    /// <returns>コンパイル済みの正規表現と変換マップ。変換元が 1 件もない場合は null</returns>
+    /// <remarks>
+    /// C# 14 の <c>field</c> キーワードにより、バッキング フィールドを宣言せずに遅延初期化します。<br/>
+    /// 初回アクセス時のみ生成し、以降は同じインスタンスを返して再生成を避けます。<br/>
+    /// 生成できない場合は null を返し、次回呼び出しで再試行されます。<br/>
+    /// </remarks>
+    private (Regex Regex, Dictionary<string, string> Map)? Compiled
+    {
+        get
+        {
+            // ダブルチェックロッキングによる遅延初期化
+            if (field == null)
+            {
+                lock (_lock)
+                {
+                    // ロック待ちの間に他スレッドが生成している可能性があるため再確認する
+                    if (field == null)
+                    {
+                        var values = Values;
+                        var regex = CreateConvertRegex(values);
+                        if (regex == null)
+                        {
+                            return null;
+                        }
+
+                        field = (regex, CreateConvertMap(values));
+                    }
+                }
+            }
+
+            return field;
+        }
     }
 
     /// <summary>変換対象文字列を網羅する正規表現を生成します。</summary>
