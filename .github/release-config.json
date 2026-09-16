@@ -1,0 +1,17 @@
+{
+  "product": "EsUtil.Helper.ZenHanConverter",
+  "versionFile": "src/ZenHanConverter.csproj",
+  "gateWorkflow": "build.yml",
+  "artifactRetentionDays": 30,
+  "releaseNotes": "全角・半角・カタカナ/ひらがな・記号の相互変換ライブラリです。NuGet.org と GitHub Packages の両方に公開しています。",
+  "nuget": {
+    "user": "SEKIYA.Tomokuni",
+    "source": "https://api.nuget.org/v3/index.json"
+  },
+  "packages": [
+    {
+      "name": "EsUtil.Helper.ZenHanConverter",
+      "project": "src/ZenHanConverter.csproj"
+    }
+  ]
+}
