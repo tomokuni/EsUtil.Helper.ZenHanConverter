@@ -37,6 +37,7 @@
 
 ```text
 <新しいリポジトリ>/
+├── Directory.Build.props     # バージョンの単一所有元（新規作成。下記「2.」の versionFile が指す）
 └── .github/
     ├── release-config.json
     ├── RELEASE.md
@@ -51,12 +52,28 @@
         └── release.yml
 ```
 
+`Directory.Build.props` はリポジトリルートに置く最小構成でかまいません。
+
+```xml
+<Project>
+
+  <PropertyGroup>
+    <!-- リリースバージョン。全プロジェクトで単一所有し、各 .csproj では指定しない。 -->
+    <!-- 自動インクリメントは行わない。リリース時に release.yml が入力値へ更新する。 -->
+    <Version>0.0.1</Version>
+  </PropertyGroup>
+
+</Project>
+```
+
+既存の共通プロパティ（`Nullable` / `ImplicitUsings` / `LangVersion` など）をここへ集約してもかまいません。
+
 ### 2. `release-config.json` を編集する
 
 | キー | 内容 | 例 |
 | --- | --- | --- |
 | `product` | リリース名とアセットのタイトルに使う表示名 | `"EsUtil.Helper.ZenHanConverter"` |
-| `versionFile` | バージョンを所有するファイル（リポジトリルートからの相対パス） | `"src/ZenHanConverter.csproj"` |
+| `versionFile` | バージョンを所有するファイル（リポジトリルートからの相対パス） | `"Directory.Build.props"` |
 | `gateWorkflow` | リリースの前提（ゲート）となるワークフローのファイル名 | `"build.yml"` |
 | `artifactRetentionDays` | アーティファクトの保持日数 | `30` |
 | `releaseNotes` | Release 本文の冒頭に付ける説明 | `"..."` |
@@ -73,9 +90,9 @@
 
 **パッケージを増やす場合はこの配列に要素を追加するだけです。** ワークフローとスクリプトの変更は不要です。
 
-> `versionFile` と `packages[].project` は同じファイルを指すのが自然です（バージョンと公開物を一致させるため）。
-> 複数のプロジェクトでバージョンを共有する場合は、`Directory.Build.props` を `versionFile` に指定し、
-> 各 csproj がそれを継承する構成にします。
+> **バージョンは 1 ファイルが単一所有する構成にしてください。** 本リポジトリはリポジトリルートの
+> `Directory.Build.props` に `<Version>` を置き、各 `.csproj` では指定しません（全プロジェクトが継承します）。
+> 複数プロジェクトでバージョンを共有する場合もこの形が使えます。
 
 ### 3. `build.yml` を編集する
 
@@ -103,11 +120,11 @@
 ### 5. 動作を確認する
 
 ```powershell
-# スクリプトの単体確認（バージョン設定・検証）
-Copy-Item src/ZenHanConverter.csproj "$env:TEMP/zc.bak"
-& ./.github/scripts/set-version.ps1 -Version 1.0.1 -VersionFile src/ZenHanConverter.csproj
+# スクリプトの単体確認（バージョン設定・検証。既定のバージョンファイルは Directory.Build.props）
+Copy-Item Directory.Build.props "$env:TEMP/dbp.bak"
+& ./.github/scripts/set-version.ps1 -Version 1.0.1
 & ./.github/scripts/verify-release-version.ps1 -Version 1.0.1 -Branch main
-Copy-Item "$env:TEMP/zc.bak" src/ZenHanConverter.csproj
+Copy-Item "$env:TEMP/dbp.bak" Directory.Build.props
 
 # パイプラインの確認（CI と同一条件）
 git clean -xdf -- src test

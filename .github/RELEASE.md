@@ -8,29 +8,35 @@
 
 ## 設計
 
-リリースに関する設定と手順は、次の 3 つに集約しています。**同じ知識を複数箇所に置かない**ことが設計方針です。
+リリースに関する設定と手順は、次の 4 つに集約しています。**同じ知識を複数箇所に置かない**ことが設計方針です。
 
 | 単一ソース | 内容 |
 | --- | --- |
 | [`release-config.json`](release-config.json) | プロダクト名、バージョンファイル、ゲートのワークフロー、パッケージの定義、NuGet.org の接続先 |
+| [`../Directory.Build.props`](../Directory.Build.props) | リリースバージョン（`<Version>`）の単一所有元。全プロジェクトが継承する |
 | [`workflows/publish.yml`](workflows/publish.yml) | pack と公開（NuGet.org / GitHub Packages）の単一実装（`release.yml` が呼ぶ） |
 | [`scripts/version.ps1`](scripts/version.ps1) | バージョンの規則（形式・比較・系列・プレリリース判定） |
 
 パッケージの追加・変更は **`release-config.json` の `packages[]` を編集するだけ**です（ワークフローとスクリプトの変更は不要）。
 
+> **バージョンは `Directory.Build.props` の `<Version>` が単一所有します。** 各 `.csproj` では指定しません。
+> リリース時に `release.yml` がこの 1 行を入力値へ書き換えてコミットします。
+
 ```text
-.github/
-├── release-config.json        # リリース設定（唯一のリポジトリ固有ファイル）
-├── RELEASE.md                 # 本ドキュメント
-├── REUSING.md                 # 他のリポジトリへの流用方法
-├── scripts/
-│   ├── version.ps1            # バージョンの規則（リポジトリ非依存）
-│   ├── set-version.ps1        # バージョンファイルの書き換え（冪等）
-│   └── verify-release-version.ps1  # リリース可否の検証
-└── workflows/
-    ├── build.yml              # push / PR でビルド・テスト（登録なし）
-    ├── publish.yml            # pack と公開（release.yml から呼ばれる共通ワークフロー）
-    └── release.yml            # 手動実行で検証・公開・タグ・Release 作成
+<リポジトリルート>/
+├── Directory.Build.props     # リリースバージョンの単一所有元
+└── .github/
+    ├── release-config.json        # リリース設定（唯一のリポジトリ固有ファイル）
+    ├── RELEASE.md                 # 本ドキュメント
+    ├── REUSING.md                 # 他のリポジトリへの流用方法
+    ├── scripts/
+    │   ├── version.ps1            # バージョンの規則（リポジトリ非依存）
+    │   ├── set-version.ps1        # バージョンファイルの書き換え（冪等）
+    │   └── verify-release-version.ps1  # リリース可否の検証
+    └── workflows/
+        ├── build.yml              # push / PR でビルド・テスト（登録なし）
+        ├── publish.yml            # pack と公開（release.yml から呼ばれる共通ワークフロー）
+        └── release.yml            # 手動実行で検証・公開・タグ・Release 作成
 ```
 
 ## ワークフロー
@@ -202,8 +208,8 @@ semver 形式で入力します。数値部分の**先頭 0 は使用できま�
 スクリプトはローカルでも実行できます。
 
 ```powershell
-# バージョンを設定する（バージョンファイルを更新。冪等）
-& ./.github/scripts/set-version.ps1 -Version 1.0.1 -VersionFile src/ZenHanConverter.csproj
+# バージョンを設定する（バージョンファイルを更新。冪等。既定は Directory.Build.props）
+& ./.github/scripts/set-version.ps1 -Version 1.0.1
 
 # リリース可否を事前確認する（形式・系列・単調性・タグ未作成）
 $info = & ./.github/scripts/verify-release-version.ps1 -Version 1.0.1 -Branch main | ConvertFrom-Json

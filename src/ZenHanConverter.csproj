@@ -7,9 +7,9 @@
   </PropertyGroup>
   
   <!-- プロダクト情報 -->
+  <!-- バージョンはリポジトリルートの Directory.Build.props が単一所有する（ここでは指定しない） -->
   <PropertyGroup>
     <Product>ZenHanConverter</Product>
-    <Version>1.0.0</Version>
     <Description>Full-width and half-width character conversion library for Japanese text</Description>
     <RootNamespace>EsUtil.Helper.ZenHanConverter</RootNamespace>
     <AssemblyName>EsUtil.Helper.ZenHanConverter</AssemblyName>
