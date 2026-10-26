@@ -1,3 +1,9 @@
+> [!IMPORTANT]
+> このリポジトリは [EsUtil](https://github.com/tomokuni/EsUtil) へ**移行（マージ）**しました。 今後の更新は行いません。
+>
+> - 後継: [`EsUtil.Feature.ZenHan.Core`](https://github.com/tomokuni/EsUtil/tree/main/EsUtil/Feature.ZenHan.Core)（NuGet: [`EsUtil.Feature.ZenHan.Core`](https://www.nuget.org/packages/EsUtil.Feature.ZenHan.Core)）
+> - 変換アプリは [ZenHanConverter](https://github.com/tomokuni/ZenHanConverter) を参照してください。
+
 <!-- markdownlint-disable MD041 -- バッジを先頭に配置するため -->
 [![release](https://img.shields.io/github/v/release/tomokuni/EsUtil.Helper.ZenHanConverter?label=release)](https://github.com/tomokuni/EsUtil.Helper.ZenHanConverter/releases)
 [![nuget](https://img.shields.io/nuget/v/EsUtil.Helper.ZenHanConverter?label=nuget)](https://www.nuget.org/packages/EsUtil.Helper.ZenHanConverter)
